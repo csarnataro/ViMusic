@@ -256,7 +256,8 @@ fun ArtistScreen(browseId: String) {
                                 },
                                 itemPlaceholderContent = {
                                     SongItemPlaceholder(thumbnailSizeDp = thumbnailSizeDp)
-                                }
+                                },
+                                addShuffleButton = true
                             )
                         }
 

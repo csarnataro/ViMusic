@@ -1,5 +1,6 @@
 package it.vfsfitvnm.vimusic.ui.screens.searchresult
 
+import android.util.Log
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -25,10 +26,14 @@ import it.vfsfitvnm.compose.persist.persist
 import it.vfsfitvnm.innertube.Innertube
 import it.vfsfitvnm.innertube.utils.plus
 import it.vfsfitvnm.vimusic.LocalPlayerAwareWindowInsets
+import it.vfsfitvnm.vimusic.LocalPlayerServiceBinder
+import it.vfsfitvnm.vimusic.R
 import it.vfsfitvnm.vimusic.ui.components.ShimmerHost
 import it.vfsfitvnm.vimusic.ui.components.themed.FloatingActionsContainerWithScrollToTop
 import it.vfsfitvnm.vimusic.ui.styling.LocalAppearance
+import it.vfsfitvnm.vimusic.utils.asMediaItem
 import it.vfsfitvnm.vimusic.utils.center
+import it.vfsfitvnm.vimusic.utils.forcePlayFromBeginning
 import it.vfsfitvnm.vimusic.utils.secondary
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -45,10 +50,13 @@ inline fun <T : Innertube.Item> ItemsPage(
     continuationPlaceholderCount: Int = 3,
     emptyItemsText: String = "No items found",
     noinline itemsPageProvider: (suspend (String?) -> Result<Innertube.ItemsPage<T>?>?)? = null,
+    addShuffleButton: Boolean = false,
 ) {
     val (_, typography) = LocalAppearance.current
 
     val updatedItemsPageProvider by rememberUpdatedState(itemsPageProvider)
+
+    val binder = LocalPlayerServiceBinder.current
 
     val lazyListState = rememberLazyListState()
 
@@ -126,5 +134,23 @@ inline fun <T : Innertube.Item> ItemsPage(
         }
 
         FloatingActionsContainerWithScrollToTop(lazyListState = lazyListState)
+
+        if (addShuffleButton) {
+            FloatingActionsContainerWithScrollToTop(
+                lazyListState = lazyListState,
+                iconId = R.drawable.shuffle,
+                onClick = {
+                    itemsPage?.items?.let { songs ->
+                        if (songs.isNotEmpty()) {
+                            binder?.stopRadio()
+                            binder?.player?.forcePlayFromBeginning(
+                                songs.shuffled()
+                                    .map { song -> (song as Innertube.SongItem).asMediaItem }
+                            )
+                        }
+                    }
+                }
+            )
+        }
     }
 }
